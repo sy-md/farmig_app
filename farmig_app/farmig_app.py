@@ -1,6 +1,23 @@
 import pynecone as pc
 from typing import List
 
+styles = {
+    "login_page": {
+        "padding_top": "10em",
+        "text_align": "top",
+        "position": "relative",
+        "background_image": "bg.svg",
+        "background_size": "100% auto",
+        "width": "100%",
+        "height": "100vh",
+    },
+    "login_input": {
+        "shadow": "lg",
+        "padding": "1em",
+        "border_radius": "lg",
+        "background": "white",
+    },
+}
 ##################data_file########################
 class Fields(pc.Model, table=True):
     thirst: int

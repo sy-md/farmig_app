@@ -79,24 +79,17 @@ class AuthState(main_farm_app):  # the login box
             else:
                 return pc.window_alert("invalid")
 
-
 #  HTML
 def myfarm():
     return pc.box(
             pc.hstack(
-                pc.link(
-                    "Store", on_click=storeDrawer.open_store, color="rgb(107,99,246)"
-                ),
-                pc.link(
-                    pc.text(AuthState.username, color="rgb()")
-                ),
                 ##########################
                 pc.box(  # the drawer model
                     pc.drawer(
                         pc.drawer_overlay(
                             pc.drawer_content(
                                 pc.drawer_header("Store"),
-                                pc.drawer_body("some stuff"),
+                                pc.drawer_body("nothong"),
                                 pc.drawer_footer(
                                     pc.button("Close", on_click=storeDrawer.open_store)
                                 ),
@@ -108,9 +101,61 @@ def myfarm():
                 ############################
                 bg="red"  # add styling for the navbar {hstack}
             ),
-            pc.text("farming plot")
-        )
+            # the fields of the user
+            pc.container(
+                pc.tabs(
+                    pc.tab_list(
+                        pc.tab("farm 1"),
+                        pc.tab("farm 2"),
+                        pc.tab("farm 3"),
+                        pc.spacer(),
+                        pc.tab(
+                            pc.link(
+                                "Store", on_click=storeDrawer.open_store, color="rgb(107,99,246)"
+                            ),
+                        )
+                    ),
+                    pc.tab_panels(
+                        pc.tab_panel(
+                            # container here for the plots of plants
+                            pc.container(
+                                pc.box(
+                                    "farm 1", bg="blue", color="white", width="50%"
+                                ),
+                                center_content=True,
+                                bg="lightblue",
+                            )
+                        ),
+                        pc.tab_panel(
+                            # container here for the plots of plants
+                            pc.container(
+                                    pc.box(
+                                    "farm 2", bg="blue", color="white", width="50%"
+                                    ),
+                                    center_content=True,
+                                    bg="lightblue",
+                            )
+                        ),
+                        pc.tab_panel(
+                            # container here for the plots of plants
+                            pc.container(
+                                    pc.box(
+                                    "farm 3", bg="blue", color="white", width="50%"
+                                    ),
+                                center_content=True,
+                                bg="lightblue",
+                            )
+                        ),
+                    )
+                ),
+                pc.box( # sytling
+                    pc.button(" Water "),
+                    pc.button(" Plant "),
+                    pc.button(" Uproot "),
+                )
 
+            )
+        )
 
 def signup():  # when button is pressed
     return pc.box(

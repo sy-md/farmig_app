@@ -26,14 +26,14 @@ class Fields(pc.Model, table=True):
 
 
 class Farm(pc.Model, table=True):  # global farm database
-    my_plot: list = list[Fields]
+    plot: list[str]
     money: int
 
 
 class User(pc.Model, table=True):  # user database
     username: str
     password: str
-    user_farm: list = list[Farm]  # pointer to users farm/s
+    user_farm: list[str]  # pointer to users farm/s
 
 # ##################farm_app#########################
 
@@ -54,21 +54,17 @@ class AuthState(main_farm_app):  # the login box
     password: str
     confirm_password: str
     logged_in: str = False
+    testing: list = ["#"]
 
     def signup(self):  # method for the signup
         """Sign up a user."""
         with pc.session() as session:
-            if self.password != self.confirm_password:
-                return pc.window_alert("Passwords do not match.")
-            if session.exec(
-                    User.select.where(User.username == self.username)
-                    ).first():
-                return pc.window_alert("Username already exists.")
-            user = User(username=self.username, password=self.password)
+            #add functionally of securece
+            user = User(username=self.username, password=self.confirm_password, user_farm=self.testing)
             session.add(user)
             session.commit()
-            self.logged_in = True
-            return pc.redirect("/login")
+        self.logged_in = True
+        return pc.redirect("/login")
 
     def login(self):  # method for the login
         with pc.session() as session:
@@ -153,7 +149,10 @@ def myfarm():
                         )
                     )
                 )
-            )
+            ),
+            pc.avatar(name=AuthState.username),
+            pc.text(AuthState.username),
+            pc.text(AuthState.testing),
         )  # end of container
 
 
@@ -177,7 +176,7 @@ def signup():  # when button is pressed
                         placeholder="Confirm Password",
                         width="100%",
                     ),
-                    pc.button("Sign Up",on_click=AuthState.signup, width="100%"),
+                    pc.button("Sign Up", on_click=AuthState.signup, width="100%"),
                 ),
                 style=styles["login_input"],
             ),

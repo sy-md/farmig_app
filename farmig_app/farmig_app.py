@@ -38,6 +38,7 @@ class User(pc.Model, table=True):  # user database
     username: str
     password: str
     user_farm: list[str]  # pointer to users farm/s
+    inventory: dict[str,str]
 
 # ##################farm_app#########################
 
@@ -47,7 +48,7 @@ class main_farm_app(pc.State):  # main page state
     farm: list[User]
 
 class plots(main_farm_app):
-    row1 = ["1","2","#","#","#","#"]
+    row1 = ["#"]
     rows = [row1]
     index = 0
     tmp = ""
@@ -58,8 +59,8 @@ class plots(main_farm_app):
     
 
     def dummy(self,row1):
-        for i in self.row1:
-            if i == row1:
+        for i,x in enumerate(self.row1):
+            if x == row1:
                 self.tmp = i
             else:
                 self.index += 1
@@ -96,7 +97,9 @@ class AuthState(main_farm_app):  # the login box
             else:
                 return pc.window_alert("invalid")
 
-
+class NumberInputState(main_farm_app):
+    number: int
+        
 #  HTML
 def get_seed(row1):
     return pc.container(
@@ -152,8 +155,50 @@ def myfarm():
                             pc.drawer(
                                 pc.drawer_overlay(
                                     pc.drawer_content(
-                                        pc.drawer_header("Store"),
-                                        pc.drawer_body("nothong"),
+                                        pc.drawer_header(
+                                            "Store",
+                                            pc.stat_number("80"),
+                                        ),
+                                        pc.drawer_body(
+                                            pc.responsive_grid(
+                                                pc.box(
+                                                    pc.text("w"),
+                                                    pc.spacer(),
+                                                    pc.stat_number("$25/per"),
+                                                    height="5em",
+                                                    width="5em",
+                                                    bg="lightgreen",
+                                                ),
+                                                pc.number_input(
+                                                    on_change=NumberInputState.set_number,
+                                                ),
+                                                pc.box(
+                                                    pc.text("p"),
+                                                    pc.spacer(),
+                                                    pc.stat_number("$5/per"),
+                                                    height="5em",
+                                                    width="5em",
+                                                    bg="lightgreen",
+                                                ),
+                                                pc.number_input(
+                                                    on_change=NumberInputState.set_number,
+                                                ),
+                                                pc.box(
+                                                    pc.text("c"),
+                                                    pc.spacer(),
+                                                    pc.stat_number("$12/per"),
+                                                    height="5em",
+                                                    width="5em",
+                                                    bg="lightgreen",
+                                                ),
+                                                pc.number_input(
+                                                    on_change=NumberInputState.set_number,
+                                                ),
+                                                
+                                            ),
+                                            columns=[3],
+                                            spacing="2",
+                                        ),
                                         pc.drawer_footer(
                                             pc.button("Close", on_click=storeDrawer.open_store)
                                         ),
@@ -164,10 +209,6 @@ def myfarm():
                         )
                     )
                 )
-            ),
-            pc.avatar(name=AuthState.username),
-            pc.switch(
-                on_click=pc.toggle_color_mode,
             ),
         )
 

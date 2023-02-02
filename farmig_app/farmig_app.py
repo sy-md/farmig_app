@@ -16,6 +16,10 @@ styles = {
         "border_radius": "lg",
         "background": "white",
     },
+    "home" : {
+        'backgroud' : 'rgb(55,55,55)',
+
+    },
 }
 # #################data_file########################
 
@@ -38,8 +42,27 @@ class User(pc.Model, table=True):  # user database
 # ##################farm_app#########################
 
 
+
 class main_farm_app(pc.State):  # main page state
     farm: list[User]
+
+class plots(main_farm_app):
+    row1 = ["1","2","#","#","#","#"]
+    rows = [row1]
+    index = 0
+    tmp = ""
+
+    needs_water: bool = False
+    needs_plant: bool = False
+    ready: bool = False
+    
+
+    def dummy(self,row1):
+        for i in self.row1:
+            if i == row1:
+                self.tmp = i
+            else:
+                self.index += 1
 
 class storeDrawer(main_farm_app):
     show_store: bool = False
@@ -47,19 +70,18 @@ class storeDrawer(main_farm_app):
     def open_store(self):
         self.show_store = not (self.show_store)  # clean way for opposite
 
-
 class AuthState(main_farm_app):  # the login box
     username: str
     password: str
     confirm_password: str
     logged_in: str = False
-
+    farms = plots
 
     def signup(self):  # method for the signup
         """Sign up a user."""
         with pc.session() as session:
             #add functionally of securece
-            user = User(username=self.username, password=self.confirm_password, user_farm=self.testing)
+            user = User(username=self.username, password=self.confirm_password, user_farm=self.farms)
             session.add(user)
             session.commit()
         self.logged_in = True
@@ -75,25 +97,29 @@ class AuthState(main_farm_app):  # the login box
                 return pc.window_alert("invalid")
 
 
-class plots(main_farm_app):
-    row1 = ["#","#","#"]
-    row2 = ["#","#","#"]
-    row3 = ["#","#","#"]
-    row4 = ["#","#","#"]
-
-    rows = [row1,row2,row3,row4] # while conditon
-
 #  HTML
 def get_seed(row1):
-    return pc.button(
-            row1
-            )
+    return pc.container(
+            pc.button(
+                row1,
+                color_scheme="red",
+                on_click= lambda: plots.dummy(row1)
+            ),
+           #pc.cond(
+           #    plots.needs_water,
+           #    pc.text("hi"),
+           #    pc.text("false"),
+           #),
+            pc.text(plots.tmp)
+        )
 
 def create_tab(rows): # use container
     return pc.tab_panel(
-                pc.hstack(
-                    pc.foreach(
-                        plots.row1, get_seed,
+                pc.container(
+                    pc.hstack(
+                        pc.foreach(
+                            plots.row1, get_seed,
+                        )
                     )
                 )
             )
@@ -102,25 +128,21 @@ def myfarm():
     return pc.container(
             pc.tabs(
                 pc.tab_list(
-                    pc.tab("farm 1"),
                     pc.spacer(),
-                    pc.tab("farm 2"),
+                    pc.tab("farm"),
                     pc.spacer(),
-                    pc.tab("farm 3"),
-                    pc.spacer(),
-                    pc.tab("farm 4"),
                 ),
                 pc.tab_panels(
-                    pc.foreach( plots.rows, create_tab),
+                    pc.foreach(plots.rows, create_tab),
                 )
             ),
             pc.box(
                 pc.hstack(
-                    pc.button(" Water "),
+                    pc.button("Water",is_active=plots.needs_water),
                     pc.spacer(),
-                    pc.button(" Plant "),
+                    pc.button(" Plant ",is_active=plots.needs_plant),
                     pc.spacer(),
-                    pc.button(" Uproot "),
+                    pc.button(" Uproot ",is_active=plots.ready),
                     pc.spacer(),
                     pc.button(
                         pc.link(
@@ -144,6 +166,9 @@ def myfarm():
                 )
             ),
             pc.avatar(name=AuthState.username),
+            pc.switch(
+                on_click=pc.toggle_color_mode,
+            ),
         )
 
 

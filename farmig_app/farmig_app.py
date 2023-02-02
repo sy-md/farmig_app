@@ -41,7 +41,6 @@ class User(pc.Model, table=True):  # user database
 class main_farm_app(pc.State):  # main page state
     farm: list[User]
 
-
 class storeDrawer(main_farm_app):
     show_store: bool = False
 
@@ -54,7 +53,7 @@ class AuthState(main_farm_app):  # the login box
     password: str
     confirm_password: str
     logged_in: str = False
-    testing: list = ["#"]
+
 
     def signup(self):  # method for the signup
         """Sign up a user."""
@@ -75,8 +74,29 @@ class AuthState(main_farm_app):  # the login box
             else:
                 return pc.window_alert("invalid")
 
-#  HTML
 
+class plots(main_farm_app):
+    row1 = ["#","#","#"]
+    row2 = ["#","#","#"]
+    row3 = ["#","#","#"]
+    row4 = ["#","#","#"]
+
+    rows = [row1,row2,row3,row4] # while conditon
+
+#  HTML
+def get_seed(row1):
+    return pc.button(
+            row1
+            )
+
+def create_tab(rows): # use container
+    return pc.tab_panel(
+                pc.hstack(
+                    pc.foreach(
+                        plots.row1, get_seed,
+                    )
+                )
+            )
 
 def myfarm():
     return pc.container(
@@ -91,33 +111,7 @@ def myfarm():
                     pc.tab("farm 4"),
                 ),
                 pc.tab_panels(
-                    pc.tab_panel(
-                        pc.container(
-                            pc.box(
-                                "farm 1", bg="blue", color="white", width="50%"
-                            ),
-                            center_content=True,
-                            bg="lightblue",
-                        )
-                    ),
-                    pc.tab_panel(
-                        pc.container(
-                            pc.box(
-                                "farm 2", bg="blue", color="white", width="50%"
-                            ),
-                            center_content=True,
-                            bg="lightblue",
-                        )
-                    ),
-                    pc.tab_panel(
-                        pc.container(
-                            pc.box(
-                                "farm 3", bg="blue", color="white", width="50%"
-                            ),
-                            center_content=True,
-                            bg="lightblue",
-                        )
-                    ),
+                    pc.foreach( plots.rows, create_tab),
                 )
             ),
             pc.box(
@@ -126,7 +120,6 @@ def myfarm():
                     pc.spacer(),
                     pc.button(" Plant "),
                     pc.spacer(),
-
                     pc.button(" Uproot "),
                     pc.spacer(),
                     pc.button(
@@ -151,9 +144,7 @@ def myfarm():
                 )
             ),
             pc.avatar(name=AuthState.username),
-            pc.text(AuthState.username),
-            pc.text(AuthState.testing),
-        )  # end of container
+        )
 
 
 def signup():  # when button is pressed

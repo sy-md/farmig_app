@@ -16,8 +16,8 @@ styles = {
         "border_radius": "lg",
         "background": "white",
     },
-    "home" : {
-        'backgroud' : 'rgb(55,55,55)',
+    "home": {
+        'backgroud': 'rgb(55,55,55)',
 
     },
 }
@@ -38,38 +38,58 @@ class User(pc.Model, table=True):  # user database
     username: str
     password: str
     user_farm: list[str]  # pointer to users farm/s
-    inventory: dict[str,str]
+    inventory: dict[str, int]
 
 # ##################farm_app#########################
 
 
-
 class main_farm_app(pc.State):  # main page state
-    farm: list[User]
+    farm: list[User] # the global tcaht with
+
 
 class plots(main_farm_app):
-    row1 = ["#"]
-    rows = [row1]
+    row1 = [
+        ["1-#"],
+        ["2-#"],
+        ]
+
+    rows = [row1]  # get rid of this 
     index = 0
-    tmp = ""
+    tmp = "selected"
+    dirt = 'rgb(140,66,31)',
+    water = 'rgb(0,0,255)',
 
     needs_water: bool = False
     needs_plant: bool = False
     ready: bool = False
-    
 
-    def dummy(self,row1):
-        for i,x in enumerate(self.row1):
-            if x == row1:
-                self.tmp = i
+    def dummy(self, row1):
+        for k, v in enumerate(self.row1):
+            if True: #k in row1[self.index][0]:
+                self.tmp = row1 #row1[self.index][0]
+                self.index = 0
             else:
                 self.index += 1
+        return plots.check_plant
+
+    def check_plant(self):
+        if self.row1[self.index] != "#":
+            self.needs_plant = not (self.needs_plant)
+        else:
+            self.needs_water = not (self.needs_water)
+
+    def water_plant(self):
+        self.dirt = self.water
+
+class Inventory(main_farm_app):
+    stg = {}
 
 class storeDrawer(main_farm_app):
     show_store: bool = False
 
     def open_store(self):
         self.show_store = not (self.show_store)  # clean way for opposite
+
 
 class AuthState(main_farm_app):  # the login box
     username: str
@@ -81,7 +101,7 @@ class AuthState(main_farm_app):  # the login box
     def signup(self):  # method for the signup
         """Sign up a user."""
         with pc.session() as session:
-            #add functionally of securece
+            # add functionally of securece
             user = User(username=self.username, password=self.confirm_password, user_farm=self.farms)
             session.add(user)
             session.commit()
@@ -97,26 +117,27 @@ class AuthState(main_farm_app):  # the login box
             else:
                 return pc.window_alert("invalid")
 
+
 class NumberInputState(main_farm_app):
     number: int
-        
-#  HTML
+
+
 def get_seed(row1):
     return pc.container(
-            pc.button(
-                row1,
-                color_scheme="red",
-                on_click= lambda: plots.dummy(row1)
-            ),
-           #pc.cond(
-           #    plots.needs_water,
-           #    pc.text("hi"),
-           #    pc.text("false"),
-           #),
-            pc.text(plots.tmp)
-        )
+                pc.button(
+                    pc.box(
+                        row1,
+                        on_click=lambda: plots.dummy(row1)
+                    ),
+                    border_radius="8em",
+                    bg=plots.dirt,
+                ),
+                pc.text(plots.tmp),
+                pc.text(plots.index)
+            )
 
-def create_tab(rows): # use container
+
+def create_tab(rows):  # use container
     return pc.tab_panel(
                 pc.container(
                     pc.hstack(
@@ -127,6 +148,7 @@ def create_tab(rows): # use container
                 )
             )
 
+
 def myfarm():
     return pc.container(
             pc.tabs(
@@ -134,6 +156,7 @@ def myfarm():
                     pc.spacer(),
                     pc.tab("farm"),
                     pc.spacer(),
+                    pc.tab("test")
                 ),
                 pc.tab_panels(
                     pc.foreach(plots.rows, create_tab),
@@ -141,63 +164,71 @@ def myfarm():
             ),
             pc.box(
                 pc.hstack(
-                    pc.button("Water",is_active=plots.needs_water),
+                    pc.button("Water", is_active=plots.needs_water, on_click=plots.water_plant),
                     pc.spacer(),
-                    pc.button(" Plant ",is_active=plots.needs_plant),
+                    pc.button("Plant", is_active=plots.needs_plant),
                     pc.spacer(),
-                    pc.button(" Uproot ",is_active=plots.ready),
+                    pc.button("Uproot", is_active=plots.ready),
                     pc.spacer(),
                     pc.button(
                         pc.link(
-                            "Store", on_click=storeDrawer.open_store, color="rgb(107,99,246)"
+                            "Store",
+                            on_click=storeDrawer.open_store,
+                            color="rgb(107,99,246)"
                         ),
                         pc.box(
                             pc.drawer(
                                 pc.drawer_overlay(
                                     pc.drawer_content(
                                         pc.drawer_header(
-                                            "Store",
-                                            pc.stat_number("80"),
+                                            pc.container(
+                                                pc.heading(
+                                                    "Store",
+                                                    text_color="green",
+                                                    text_align="center"
+                                                ),
+                                                pc.divider()
+                                            ),
+                                            pc.container(
+                                                pc.hstack(
+                                                    pc.stat_label("Cash"),
+                                                    pc.stat_number("$00000"),
+                                                ),
+                                                center_content=True,
+                                            ),
                                         ),
                                         pc.drawer_body(
                                             pc.responsive_grid(
-                                                pc.box(
-                                                    pc.text("w"),
-                                                    pc.spacer(),
-                                                    pc.stat_number("$25/per"),
-                                                    height="5em",
-                                                    width="5em",
-                                                    bg="lightgreen",
+                                                pc.badge(  # foreach comp from a database
+                                                    "Wheat",
+                                                    variant="subtle",
+                                                    color_scheme="yellow",
+                                                    text_align="center"
                                                 ),
-                                                pc.number_input(
-                                                    on_change=NumberInputState.set_number,
+                                                pc.button(
+                                                    pc.stat_number("$25"),
                                                 ),
-                                                pc.box(
-                                                    pc.text("p"),
-                                                    pc.spacer(),
-                                                    pc.stat_number("$5/per"),
-                                                    height="5em",
-                                                    width="5em",
-                                                    bg="lightgreen",
+                                                pc.badge(
+                                                    "Pears",
+                                                    variant="subtle",
+                                                    color_scheme="yellow",
+                                                    text_align="center"
                                                 ),
-                                                pc.number_input(
-                                                    on_change=NumberInputState.set_number,
+                                                pc.button(
+                                                    pc.stat_number("$5"),
                                                 ),
-                                                pc.box(
-                                                    pc.text("c"),
-                                                    pc.spacer(),
-                                                    pc.stat_number("$12/per"),
-                                                    height="5em",
-                                                    width="5em",
-                                                    bg="lightgreen",
+                                                pc.badge(
+                                                    "Corn",
+                                                    variant="subtle",
+                                                    color_scheme="yellow",
+                                                    text_align="center"
                                                 ),
-                                                pc.number_input(
-                                                    on_change=NumberInputState.set_number,
-                                                ),
-                                                
+                                                pc.button(
+                                                    pc.stat_number("$12"),
+                                                )
                                             ),
                                             columns=[3],
-                                            spacing="2",
+                                            spacing="1",
                                         ),
                                         pc.drawer_footer(
                                             pc.button("Close", on_click=storeDrawer.open_store)
@@ -208,8 +239,24 @@ def myfarm():
                             ),  # the drawer
                         )
                     )
-                )
-            ),
+                ),
+                pc.divider(),
+                pc.container(
+                    pc.heading("Inventory"),
+                    pc.container(
+                        pc.responsive_grid(
+                            # foreach comp from a invetory state
+                            pc.text(Inventory.stg["test"])
+
+
+
+                        ),
+                        coloums=[4],
+                        spacing="3",
+                    ),
+                    center_content=True
+                ),
+            )
         )
 
 

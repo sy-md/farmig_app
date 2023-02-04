@@ -49,40 +49,98 @@ class main_farm_app(pc.State):  # main page state
 
 class plots(main_farm_app):
     row1 = [
-        ["1-#"],
-        ["2-#"],
+        "pl1-#",
+        "pl2-#",
+        "pl3-#",
         ]
 
     rows = [row1]  # get rid of this 
     index = 0
+    thirst = 75
     tmp = "selected"
-    dirt = 'rgb(140,66,31)',
-    water = 'rgb(0,0,255)',
+    dirt = 'rgb(140,66,31)'
+    water = 'rgb(0,0,255)'
+    render = ""
 
     needs_water: bool = False
     needs_plant: bool = False
-    ready: bool = False
+    needs_harvest: bool = False
+    needs_plow: bool =False
 
-    def dummy(self, row1):
-        for k, v in enumerate(self.row1):
-            if True: #k in row1[self.index][0]:
-                self.tmp = row1 #row1[self.index][0]
-                self.index = 0
+    def check_plant(self, row1):
+        chose = row1  # the plant
+        plnt_type = 3  # the plant name
+        plnt = 4 # the stae of the plant
+        dirt = "#"
+        wet = "_"
+
+        self.tmp = chose
+
+        if chose[plnt] != dirt and chose[plnt] != wet:  # is a plant
+            # state to if the plant is ready to be harvest
+            if self.thirst >= 50:
+                self.needs_water = True
             else:
-                self.index += 1
-        return plots.check_plant
-
-    def check_plant(self):
-        if self.row1[self.index] != "#":
-            self.needs_plant = not (self.needs_plant)
-        else:
-            self.needs_water = not (self.needs_water)
+                self.needs_water = True
+                self.needs_harvest = True
+            self.needs_plant =False
+            self.needs_plow = False
+        else:  # is dirt or wet
+            if chose[plnt] == dirt:
+                self.needs_plow = True
+                self.needs_plant =False
+                self.needs_water =False
+            if chose[plnt] == wet:
+                self.needs_plow = False
+                self.needs_plant = True
+                self.needs_water=False
+        
 
     def water_plant(self):
-        self.dirt = self.water
+        for x in self.row1:
+            if x == self.tmp:
+                self.row1[self.index] = self.row1[self.index][0] + "{}{}-{}".format("l",(self.index+1), 'c')
+            else:
+                self.index += 1
+        self.index = 0
+
+    def plow_plant(self):
+        for x in self.row1:
+            if x == self.tmp:
+                self.row1[self.index] = self.row1[self.index][0] + "{}{}-{}".format("l",(self.index+1),"_")
+            else:
+                self.index += 1
+        self.index = 0
+
+    def harvest_plant(self):
+        for x in self.row1:
+            if x == self.tmp:
+                self.row1[self.index] = self.row1[self.index][0] + "{}{}-{}".format("l",(self.index+1),"#")
+            else:
+                self.index += 1
+        self.index = 0
+
+    def plant_plant(self):
+        for x in self.row1:
+            if x == self.tmp:
+                self.row1[self.index] = self.row1[self.index][0] + "{}{}-{}".format("l",(self.index+1),"pick")
+            else:
+                self.index += 1
+        self.index = 0
+
+
+
 
 class Inventory(main_farm_app):
-    stg = {}
+    stg = [
+        ["corn " ,5],
+        ["skfj"],
+        [""],
+        [""],
+        [""],
+        [""],
+        [""],
+    ]
 
 class storeDrawer(main_farm_app):
     show_store: bool = False
@@ -127,7 +185,7 @@ def get_seed(row1):
                 pc.button(
                     pc.box(
                         row1,
-                        on_click=lambda: plots.dummy(row1)
+                        on_click=lambda: plots.check_plant(row1)
                     ),
                     border_radius="8em",
                     bg=plots.dirt,
@@ -156,7 +214,6 @@ def myfarm():
                     pc.spacer(),
                     pc.tab("farm"),
                     pc.spacer(),
-                    pc.tab("test")
                 ),
                 pc.tab_panels(
                     pc.foreach(plots.rows, create_tab),
@@ -164,12 +221,13 @@ def myfarm():
             ),
             pc.box(
                 pc.hstack(
+                    pc.button("plow", is_active=plots.needs_plow , on_click=plots.plow_plant),
+                    pc.spacer(),
+                    pc.button("Plant", is_active=plots.needs_plant , on_click=plots.plant_plant),
+                    pc.spacer(),
+                    pc.button("Harvest", is_active=plots.needs_harvest, on_click=plots.harvest_plant),
+                    pc.spacer(),
                     pc.button("Water", is_active=plots.needs_water, on_click=plots.water_plant),
-                    pc.spacer(),
-                    pc.button("Plant", is_active=plots.needs_plant),
-                    pc.spacer(),
-                    pc.button("Uproot", is_active=plots.ready),
-                    pc.spacer(),
                     pc.button(
                         pc.link(
                             "Store",
@@ -244,20 +302,21 @@ def myfarm():
                 pc.container(
                     pc.heading("Inventory"),
                     pc.container(
-                        pc.responsive_grid(
-                            # foreach comp from a invetory state
-                            pc.text(Inventory.stg["test"])
-
-
-
-                        ),
-                        coloums=[4],
-                        spacing="3",
+                        pc.foreach(Inventory.stg, make_iventory),
                     ),
-                    center_content=True
-                ),
+                    center_content=True,
+                )
             )
         )
+
+def make_iventory(stg):
+    return pc.box(
+        pc.button(
+            stg
+        ),
+    )
+    
+
 
 
 def signup():  # when button is pressed

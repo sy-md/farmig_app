@@ -61,11 +61,19 @@ class plots(main_farm_app):
     dirt = 'rgb(140,66,31)'
     water = 'rgb(0,0,255)'
     render = ""
+    plant = [
+            ["corn","c"],
+            ["dirt","#"],
+            ["wet","_"],
+            ["pear","p"],
+            ["wheat","w"],
+            ]
 
     needs_water: bool = False
     needs_plant: bool = False
     needs_harvest: bool = False
     needs_plow: bool =False
+    can_choose: bool =False
 
     def check_plant(self, row1):
         chose = row1  # the plant
@@ -83,6 +91,8 @@ class plots(main_farm_app):
             else:
                 self.needs_water = True
                 self.needs_harvest = True
+
+
             self.needs_plant =False
             self.needs_plow = False
         else:  # is dirt or wet
@@ -94,6 +104,31 @@ class plots(main_farm_app):
                 self.needs_plow = False
                 self.needs_plant = True
                 self.needs_water=False
+
+    def can_pick(self):
+        for x in self.row1:
+            if x == self.tmp:
+                self.can_choose = True
+            else:
+                self.can_choose = False
+        self.can_choose = not self.can_choose
+
+    def make_plant(self):
+        # take one from the stg amount - if 0 than dont and take zero away
+        # and make false
+        
+        for x in self.row1:
+            if x == self.tmp:
+                self.row1[self.index] = self.row1[self.index][0] + "{}{}-{}".format(
+                        "l",
+                        (self.index+1),
+                        self.plant[0][1])
+            else:
+                self.index += 1
+        self.index = 0
+
+                
+
         
 
     def water_plant(self):
@@ -111,6 +146,7 @@ class plots(main_farm_app):
             else:
                 self.index += 1
         self.index = 0
+        self.needs_plow = not (self.needs_plow)
 
     def harvest_plant(self):
         for x in self.row1:
@@ -130,17 +166,15 @@ class plots(main_farm_app):
 
 
 
-
 class Inventory(main_farm_app):
-    stg = [
-        ["corn " ,5],
-        ["skfj"],
-        [""],
-        [""],
-        [""],
-        [""],
-        [""],
-    ]
+    stg = [["corn " ,3]]
+    money = 60
+    opt = ""
+
+    def purchase(self):
+        
+
+
 
 class storeDrawer(main_farm_app):
     show_store: bool = False
@@ -154,13 +188,17 @@ class AuthState(main_farm_app):  # the login box
     password: str
     confirm_password: str
     logged_in: str = False
-    farms = plots
 
     def signup(self):  # method for the signup
         """Sign up a user."""
         with pc.session() as session:
             # add functionally of securece
-            user = User(username=self.username, password=self.confirm_password, user_farm=self.farms)
+            user = User(
+                    username=self.username, 
+                    password=self.confirm_password, 
+                    user_farm=plots.row1, 
+                    inventory=Inventory.stg,
+                )
             session.add(user)
             session.commit()
         self.logged_in = True
@@ -190,8 +228,8 @@ def get_seed(row1):
                     border_radius="8em",
                     bg=plots.dirt,
                 ),
-                pc.text(plots.tmp),
-                pc.text(plots.index)
+                #pc.text(plots.tmp),  #debuging shows what plant is chosen
+                #pc.text(plots.indexa,  #debuging shows what will be rendered)
             )
 
 
@@ -222,8 +260,7 @@ def myfarm():
             pc.box(
                 pc.hstack(
                     pc.button("plow", is_active=plots.needs_plow , on_click=plots.plow_plant),
-                    pc.spacer(),
-                    pc.button("Plant", is_active=plots.needs_plant , on_click=plots.plant_plant),
+                    pc.button("Plant", is_active=plots.needs_plant , on_click=[plots.can_pick,plots.plant_plant]),
                     pc.spacer(),
                     pc.button("Harvest", is_active=plots.needs_harvest, on_click=plots.harvest_plant),
                     pc.spacer(),
@@ -249,8 +286,8 @@ def myfarm():
                                             ),
                                             pc.container(
                                                 pc.hstack(
-                                                    pc.stat_label("Cash"),
-                                                    pc.stat_number("$00000"),
+                                                    pc.stat_label("Cash $"),
+                                                    pc.stat_number(Inventory.money)
                                                 ),
                                                 center_content=True,
                                             ),
@@ -265,15 +302,17 @@ def myfarm():
                                                 ),
                                                 pc.button(
                                                     pc.stat_number("$25"),
+                                                    on_click=Inventory.purchase,
                                                 ),
                                                 pc.badge(
-                                                    "Pears",
+                                                    "pear",
                                                     variant="subtle",
                                                     color_scheme="yellow",
                                                     text_align="center"
                                                 ),
                                                 pc.button(
                                                     pc.stat_number("$5"),
+                                                    on_click=Inventory.purchase,
                                                 ),
                                                 pc.badge(
                                                     "Corn",
@@ -283,6 +322,7 @@ def myfarm():
                                                 ),
                                                 pc.button(
                                                     pc.stat_number("$12"),
+                                                    on_click=Inventory.purchase,
                                                 )
                                             ),
                                             columns=[3],
@@ -294,30 +334,34 @@ def myfarm():
                                     )
                                 ),  # the overlay
                                 is_open=storeDrawer.show_store,
-                            ),  # the drawer
+                            )  # the drawer
                         )
-                    )
+                    ),
+                    margin="2"
                 ),
                 pc.divider(),
                 pc.container(
                     pc.heading("Inventory"),
-                    pc.container(
-                        pc.foreach(Inventory.stg, make_iventory),
-                    ),
+                    pc.divider(),
                     center_content=True,
+                ),
+                pc.responsive_grid(
+                    pc.foreach(Inventory.stg, make_iventory),
+                    columns=[5],
+                    spacing="2",
+                    margin="5"
                 )
             )
         )
 
 def make_iventory(stg):
-    return pc.box(
-        pc.button(
-            stg
-        ),
-    )
-    
-
-
+    return pc.hstack(
+                pc.button(
+                    stg,
+                    is_active=plots.can_choose,
+                    on_click=plots.make_plant,
+                )
+            )
 
 def signup():  # when button is pressed
     return pc.box(

@@ -1,4 +1,5 @@
 import pynecone as pc
+import engine as eg
 
 styles = {
     "login_page": {
@@ -44,17 +45,15 @@ class User(pc.Model, table=True):  # user database
 
 
 class main_farm_app(pc.State):  # main page state
-    farm: list[User] # the global tcaht with
+    farm: list[User] # the global th
 
 
 class plots(main_farm_app):
-    row1 = [
-        "pl1-#",
-        "pl2-#",
-        "pl3-#",
-        ]
+    empty = [["empty"],["empty"],["empty"],["empty"]] # double list [[],[]]
+    grd = []
+    row = {1 : ["g",1],2 : ["#",2],3 : ["#",3],4 : ["#",4]}
 
-    rows = [row1]  # get rid of this 
+    #rows = [row1]  # get rid of this 
     index = 0
     thirst = 75
     tmp = "selected"
@@ -72,38 +71,52 @@ class plots(main_farm_app):
     needs_water: bool = False
     needs_plant: bool = False
     needs_harvest: bool = False
-    needs_plow: bool =False
-    can_choose: bool =False
+    needs_plow: bool = False
+    can_choose: bool = False
 
-    def check_plant(self, row1):
-        chose = row1  # the plant
-        plnt_type = 3  # the plant name
-        plnt = 4 # the stae of the plant
-        dirt = "#"
-        wet = "_"
+    gen = False
 
-        self.tmp = chose
+    def generate_field(self):
+        if self.gen is False:
+            self.gen = True
+            self.grd = eg.gen(self.row)
+            self.empty = self.grd
+        else:
+            self.gen = True
 
-        if chose[plnt] != dirt and chose[plnt] != wet:  # is a plant
-            # state to if the plant is ready to be harvest
-            if self.thirst >= 50:
-                self.needs_water = True
-            else:
-                self.needs_water = True
-                self.needs_harvest = True
+    def check_plant(self,plnt):
+        return eg.check_plnt(plnt)
 
 
-            self.needs_plant =False
-            self.needs_plow = False
-        else:  # is dirt or wet
-            if chose[plnt] == dirt:
-                self.needs_plow = True
-                self.needs_plant =False
-                self.needs_water =False
-            if chose[plnt] == wet:
-                self.needs_plow = False
-                self.needs_plant = True
-                self.needs_water=False
+
+       #chose = row1  # the plant
+       #plnt_type = 3  # the plant name
+       #plnt = 4 # the stae of the plant
+       #dirt = "#"
+       #wet = "_"
+
+       #self.tmp = chose
+
+       #if chose[plnt] != dirt and chose[plnt] != wet:  # is a plant
+       #    # state to if the plant is ready to be harvest
+       #    if self.thirst >= 50:
+       #        self.needs_water = True
+       #    else:
+       #        self.needs_water = True
+       #        self.needs_harvest = True
+
+
+       #    self.needs_plant =False
+       #    self.needs_plow = False
+       #else:  # is dirt or wet
+       #    if chose[plnt] == dirt:
+       #        self.needs_plow = True
+       #        self.needs_plant =False
+       #        self.needs_water =False
+       #    if chose[plnt] == wet:
+       #        self.needs_plow = False
+       #        self.needs_plant = True
+       #        self.needs_water=False
 
     def can_pick(self):
         for x in self.row1:
@@ -127,9 +140,6 @@ class plots(main_farm_app):
                 self.index += 1
         self.index = 0
 
-                
-
-        
 
     def water_plant(self):
         for x in self.row1:
@@ -170,10 +180,17 @@ class Inventory(main_farm_app):
     stg = [["corn " ,3]]
     money = 60
     opt = ""
+    store = {
+            "wheat" : 25,
+            "pear" : 5,
+            "corn" : 12
+            }
+    def purchase(self,pear):
+        #self.opt = price
+        tes = eg
+        self.money = pear
 
-    def purchase(self):
         
-
 
 
 class storeDrawer(main_farm_app):
@@ -189,6 +206,9 @@ class AuthState(main_farm_app):  # the login box
     confirm_password: str
     logged_in: str = False
 
+
+    def test_signup():
+        return eg.save_user(self.username,self.password)
     def signup(self):  # method for the signup
         """Sign up a user."""
         with pc.session() as session:
@@ -218,12 +238,12 @@ class NumberInputState(main_farm_app):
     number: int
 
 
-def get_seed(row1):
+def get_seed(empty):
     return pc.container(
                 pc.button(
                     pc.box(
-                        row1,
-                        on_click=lambda: plots.check_plant(row1)
+                        empty,
+                        on_click= lambda: plots.check_plant(empty)
                     ),
                     border_radius="8em",
                     bg=plots.dirt,
@@ -233,13 +253,13 @@ def get_seed(row1):
             )
 
 
-def create_tab(rows):  # use container
+def create_tab(empty):  # use container
     return pc.tab_panel(
                 pc.container(
                     pc.hstack(
                         pc.foreach(
-                            plots.row1, get_seed,
-                        )
+                            plots.empty, get_seed,
+                        ),
                     )
                 )
             )
@@ -254,15 +274,22 @@ def myfarm():
                     pc.spacer(),
                 ),
                 pc.tab_panels(
-                    pc.foreach(plots.rows, create_tab),
+                    pc.foreach(
+                        plots.empty,
+                        create_tab
+                    ),
                 )
             ),
             pc.box(
                 pc.hstack(
-                    pc.button("plow", is_active=plots.needs_plow , on_click=plots.plow_plant),
-                    pc.button("Plant", is_active=plots.needs_plant , on_click=[plots.can_pick,plots.plant_plant]),
+                    pc.button("plow", is_active=plots.needs_plow , on_click=plots.generate_field),
+                    pc.button("Plant", is_active=plots.needs_plant , on_click=[
+                        plots.can_pick,
+                        plots.plant_plant
+                        ]
+                    ),
                     pc.spacer(),
-                    pc.button("Harvest", is_active=plots.needs_harvest, on_click=plots.harvest_plant),
+                    pc.button("Harvest", is_active=plots.needs_harvest, on_click= plots.harvest_plant),
                     pc.spacer(),
                     pc.button("Water", is_active=plots.needs_water, on_click=plots.water_plant),
                     pc.button(
@@ -312,7 +339,7 @@ def myfarm():
                                                 ),
                                                 pc.button(
                                                     pc.stat_number("$5"),
-                                                    on_click=Inventory.purchase,
+                                                    on_click= lambda pear: Inventory.purchase(pear),
                                                 ),
                                                 pc.badge(
                                                     "Corn",
@@ -350,7 +377,9 @@ def myfarm():
                     columns=[5],
                     spacing="2",
                     margin="5"
-                )
+                ),
+                pc.divider(),
+                pc.text("plow your field to get started")
             )
         )
 
